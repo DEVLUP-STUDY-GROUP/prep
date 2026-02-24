@@ -41,11 +41,13 @@ async function sendPaymentConfirmationEmail(paymentData) {
         .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; }
         .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-        .info-row:last-child { border-bottom: none; }
-        .label { color: #6b7280; }
-        .value { font-weight: bold; margin-left: 10px; }
-        .amount { color: #2563eb; font-size: 1.2em; }
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table tr { border-bottom: 1px solid #e5e7eb; }
+        .info-table tr:last-child { border-bottom: none; }
+        .info-table td { padding: 12px 0; vertical-align: top; }
+        .info-table .label { color: #6b7280; width: 80px; white-space: nowrap; padding-right: 16px; }
+        .info-table .value { font-weight: bold; color: #111827; }
+        .info-table .amount { color: #2563eb; font-size: 1.2em; }
         .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 0.9em; }
     </style>
 </head>
@@ -59,29 +61,31 @@ async function sendPaymentConfirmationEmail(paymentData) {
             <p>결제가 성공적으로 완료되었습니다. 감사합니다!</p>
 
             <div class="info-box">
-                <div class="info-row">
-                    <span class="label">상품명 </span>
-                    <span class="value">${productName}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">결제 금액 </span>
-                    <span class="value amount">${formattedAmount}원</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">주문번호 </span>
-                    <span class="value">${orderId}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">결제일시 </span>
-                    <span class="value">${formattedDate}</span>
-                </div>
+                <table class="info-table">
+                    <tr>
+                        <td class="label">상품명</td>
+                        <td class="value">${productName}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">결제 금액</td>
+                        <td class="value amount">${formattedAmount}원</td>
+                    </tr>
+                    <tr>
+                        <td class="label">주문번호</td>
+                        <td class="value">${orderId}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">결제일시</td>
+                        <td class="value">${formattedDate}</td>
+                    </tr>
+                </table>
             </div>
 
             <p>강의 수강 관련 문의사항이 있으시면 언제든지 연락 주세요.</p>
         </div>
         <div class="footer">
             <p>본 메일은 발신 전용입니다.</p>
-            <p>&copy; Prep Education  </p>
+            <p>&copy; Prep Education</p>
         </div>
     </div>
 </body>
