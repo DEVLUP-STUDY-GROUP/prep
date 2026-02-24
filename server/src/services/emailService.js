@@ -44,7 +44,7 @@ async function sendPaymentConfirmationEmail(paymentData) {
         .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
         .info-row:last-child { border-bottom: none; }
         .label { color: #6b7280; }
-        .value { font-weight: bold; }
+        .value { font-weight: bold; margin-left: 10px; }
         .amount { color: #2563eb; font-size: 1.2em; }
         .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 0.9em; }
     </style>
