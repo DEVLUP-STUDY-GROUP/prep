@@ -36,7 +36,7 @@ pipeline {
                                     # 디렉토리 정리 후 clone
                                     rm -rf $DEPLOY_PATH/*
                                     rm -rf $DEPLOY_PATH/.* 2>/dev/null || true
-                                    git clone -b develop https://github.com/shs91/prep.git $DEPLOY_PATH
+                                    git clone -b develop https://github.com/DEVLUP-STUDY-GROUP/prep.git $DEPLOY_PATH
                                 fi
 
                                 # .env 파일 복사

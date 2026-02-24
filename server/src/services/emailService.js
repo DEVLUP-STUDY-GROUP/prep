@@ -60,19 +60,19 @@ async function sendPaymentConfirmationEmail(paymentData) {
 
             <div class="info-box">
                 <div class="info-row">
-                    <span class="label">상품명</span>
+                    <span class="label">상품명 </span>
                     <span class="value">${productName}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">결제 금액</span>
+                    <span class="label">결제 금액 </span>
                     <span class="value amount">${formattedAmount}원</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">주문번호</span>
+                    <span class="label">주문번호 </span>
                     <span class="value">${orderId}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">결제일시</span>
+                    <span class="label">결제일시 </span>
                     <span class="value">${formattedDate}</span>
                 </div>
             </div>
