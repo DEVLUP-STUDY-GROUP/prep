@@ -81,7 +81,7 @@ async function sendPaymentConfirmationEmail(paymentData) {
         </div>
         <div class="footer">
             <p>본 메일은 발신 전용입니다.</p>
-            <p>&copy; Prep Education</p>
+            <p>&copy; Prep Education  </p>
         </div>
     </div>
 </body>
