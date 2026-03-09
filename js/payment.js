@@ -47,7 +47,9 @@
 
         if (token && user) {
             authLinks.style.display = 'none';
-            userArea.classList.add('active');
+            userArea.style.display = 'flex';
+            userArea.style.alignItems = 'center';
+            userArea.style.gap = '12px';
             if (userName) userName.textContent = user.name + '님';
             if (mypageLink) mypageLink.style.display = 'inline';
 
