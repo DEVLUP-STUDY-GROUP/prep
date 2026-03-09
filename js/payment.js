@@ -34,6 +34,7 @@
 
     // 네비게이션 상태 업데이트
     function updateNav() {
+        const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         const authLinks = document.getElementById('authLinks');
         const userArea = document.getElementById('userArea');
@@ -41,9 +42,12 @@
         const userName = document.getElementById('userName');
         const logoutBtn = document.getElementById('logoutBtn');
 
-        if (user && authLinks && userArea) {
+        // nav 요소가 없는 페이지(payment-success 등)에서는 스킵
+        if (!authLinks || !userArea) return;
+
+        if (token && user) {
             authLinks.style.display = 'none';
-            userArea.style.display = 'flex';
+            userArea.classList.add('active');
             if (userName) userName.textContent = user.name + '님';
             if (mypageLink) mypageLink.style.display = 'inline';
 

@@ -37,6 +37,7 @@
         color: #6b7280;
       }
       .btn-logout:hover { background: #f3f4f6; }
+      #userArea.active { display: flex; align-items: center; gap: 12px; }
       .auth-links { display: flex; gap: 8px; }
       .auth-links a {
         padding: 6px 14px;
@@ -63,7 +64,7 @@
           <a href="signup.html" class="signup-link">회원가입</a>
         </div>
         <!-- 로그인 상태 -->
-        <div id="userArea" style="display: none; align-items: center; gap: 12px;">
+        <div id="userArea" style="display: none;">
           <span class="user-name" id="userName"></span>
           <button class="btn-logout" id="logoutBtn">로그아웃</button>
         </div>
