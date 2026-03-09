@@ -14,12 +14,12 @@ function createTransporter() {
 }
 
 /**
- * 결제 완료 이메일 발송
+ * 결제 완료 + 인증 코드 이메일 발송
  */
 async function sendPaymentConfirmationEmail(paymentData) {
     const transporter = createTransporter();
 
-    const { customerName, customerEmail, productName, amount, orderId, paidAt } = paymentData;
+    const { customerName, customerEmail, productName, amount, orderId, paidAt, authCode } = paymentData;
 
     const formattedAmount = amount.toLocaleString('ko-KR');
     const formattedDate = new Date(paidAt).toLocaleString('ko-KR', {
@@ -29,6 +29,15 @@ async function sendPaymentConfirmationEmail(paymentData) {
         hour: '2-digit',
         minute: '2-digit'
     });
+
+    // 인증 코드 섹션 (코드가 있을 때만 표시)
+    const authCodeSection = authCode ? `
+            <div style="background: #ecfdf5; border: 2px solid #10b981; padding: 24px; border-radius: 12px; margin: 24px 0; text-align: center;">
+                <p style="color: #065f46; font-size: 0.9rem; margin-bottom: 8px;">고객님의 인증 코드</p>
+                <p style="font-size: 1.8rem; font-weight: 800; color: #047857; letter-spacing: 3px; margin: 0;">${authCode}</p>
+                <p style="color: #6b7280; font-size: 0.8rem; margin-top: 12px;">위 코드를 서비스 접속 시 입력해주세요.</p>
+            </div>
+    ` : '';
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -59,6 +68,8 @@ async function sendPaymentConfirmationEmail(paymentData) {
         <div class="content">
             <p>${customerName}님, 안녕하세요.</p>
             <p>결제가 성공적으로 완료되었습니다. 감사합니다!</p>
+
+            ${authCodeSection}
 
             <div class="info-box">
                 <table class="info-table">
@@ -96,7 +107,7 @@ async function sendPaymentConfirmationEmail(paymentData) {
         await transporter.sendMail({
             from: `"Prep Education" <${process.env.SMTP_USER}>`,
             to: customerEmail,
-            subject: `[Prep] ${productName} 결제 완료 안내`,
+            subject: `[Prep] ${productName} 결제 완료${authCode ? ' - 인증 코드 안내' : ''}`,
             html: htmlContent
         });
 

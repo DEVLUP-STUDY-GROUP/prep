@@ -4,12 +4,12 @@ const { pool } = require('../config/database');
  * 주문 생성 (결제 전)
  */
 async function createPayment(paymentData) {
-    const { orderId, productId, amount, customerName, customerPhone, customerEmail, customerBirth } = paymentData;
+    const { orderId, userId, productId, amount } = paymentData;
 
     const [result] = await pool.execute(
-        `INSERT INTO tb_prep_payments (order_id, product_id, amount, customer_name, customer_phone, customer_email, customer_birth)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [orderId, productId, amount, customerName, customerPhone, customerEmail, customerBirth]
+        `INSERT INTO tb_prep_payments (order_id, user_id, product_id, amount)
+         VALUES (?, ?, ?, ?)`,
+        [orderId, userId, productId, amount]
     );
 
     return result.insertId;
@@ -68,10 +68,29 @@ async function updatePaymentCanceled(orderId, tossResponse) {
     return result.affectedRows > 0;
 }
 
+/**
+ * 사용자별 결제 내역 조회
+ */
+async function getPaymentsByUserId(userId) {
+    const [rows] = await pool.execute(
+        `SELECT p.order_id, p.amount, p.status, p.paid_at, p.created_at,
+                pr.name as product_name,
+                ac.code as auth_code
+         FROM tb_prep_payments p
+         JOIN tb_prep_products pr ON p.product_id = pr.id
+         LEFT JOIN tb_prep_auth_codes ac ON ac.payment_id = p.id
+         WHERE p.user_id = ?
+         ORDER BY p.created_at DESC`,
+        [userId]
+    );
+    return rows;
+}
+
 module.exports = {
     createPayment,
     getPaymentByOrderId,
     updatePaymentConfirmed,
     updatePaymentFailed,
-    updatePaymentCanceled
+    updatePaymentCanceled,
+    getPaymentsByUserId
 };

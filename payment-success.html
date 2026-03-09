@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>결제 완료 - Prep Education</title>
     <link rel="stylesheet" href="css/payment.css">
+    <style>
+        .auth-code-box {
+            background: #ecfdf5;
+            border: 2px solid #10b981;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .auth-code-box .code-label {
+            font-size: 0.9rem;
+            color: #065f46;
+            margin-bottom: 8px;
+        }
+        .auth-code-box .code-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #047857;
+            letter-spacing: 3px;
+        }
+        .auth-code-box .code-hint {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 12px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,13 +52,21 @@
             <div id="successState" class="result-container" style="display: none;">
                 <div class="result-icon success">&#10004;</div>
                 <h2 class="result-title">결제가 완료되었습니다!</h2>
-                <p class="result-message">등록하신 이메일로 상세 안내가 발송됩니다.</p>
+                <p class="result-message">등록하신 이메일로 인증 코드가 발송됩니다.</p>
 
-                <div id="paymentDetails" class="result-details">
-                    <!-- 결제 상세 정보가 여기에 표시됩니다 -->
+                <!-- 인증 코드 표시 -->
+                <div id="authCodeBox" class="auth-code-box" style="display: none;">
+                    <div class="code-label">발급된 인증 코드</div>
+                    <div id="authCodeValue" class="code-value"></div>
+                    <div class="code-hint">이 코드는 이메일로도 발송됩니다. 마이페이지에서도 확인 가능합니다.</div>
                 </div>
 
-                <a href="index.html" class="btn btn-primary">홈으로 돌아가기</a>
+                <div id="paymentDetails" class="result-details">
+                    <!-- 결제 상세 정보 -->
+                </div>
+
+                <a href="mypage.html" class="btn btn-primary">마이페이지에서 확인</a>
+                <a href="index.html" class="btn btn-secondary">홈으로 돌아가기</a>
             </div>
 
             <!-- 실패 상태 -->
@@ -41,7 +75,7 @@
                 <h2 class="result-title">결제 승인에 실패했습니다</h2>
                 <p id="failMessage" class="result-message">다시 시도해주세요.</p>
 
-                <a href="payment.html" class="btn btn-primary">다시 결제하기</a>
+                <a href="index.html" class="btn btn-primary">다시 결제하기</a>
                 <a href="index.html" class="btn btn-secondary">홈으로 돌아가기</a>
             </div>
         </main>
@@ -63,10 +97,15 @@
                 loadingState.style.display = 'none';
 
                 if (result.success) {
-                    // 결제 상태 조회
                     const urlParams = new URLSearchParams(window.location.search);
                     const orderId = urlParams.get('orderId');
                     const amount = urlParams.get('amount');
+
+                    // 인증 코드 표시
+                    if (result.authCode) {
+                        document.getElementById('authCodeBox').style.display = 'block';
+                        document.getElementById('authCodeValue').textContent = result.authCode;
+                    }
 
                     paymentDetails.innerHTML = `
                         <div class="detail-row">

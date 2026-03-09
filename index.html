@@ -5,10 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>강의 결제 - Prep Education</title>
     <link rel="stylesheet" href="css/payment.css" />
+    <style>
+      .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        max-width: 600px;
+        margin: 0 auto;
+        border-radius: 12px 12px 0 0;
+      }
+      .nav-bar .nav-links { display: flex; gap: 16px; align-items: center; }
+      .nav-bar a {
+        color: #4b5563;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      .nav-bar a:hover { color: #2563eb; }
+      .nav-bar a.active { color: #2563eb; font-weight: 700; }
+      .nav-bar .user-name { font-weight: 600; color: #1f2937; }
+      .btn-logout {
+        background: none;
+        border: 1px solid #d1d5db;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
+      .btn-logout:hover { background: #f3f4f6; }
+      .auth-links { display: flex; gap: 8px; }
+      .auth-links a {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .auth-links .login-link { color: #2563eb; border: 1px solid #2563eb; }
+      .auth-links .signup-link { background: #2563eb; color: white; }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <header class="header">
+    <div class="container" style="padding-top: 0;">
+      <!-- 네비게이션 -->
+      <nav class="nav-bar">
+        <div class="nav-links">
+          <a href="index.html" class="active">강의 결제</a>
+          <a href="mypage.html" id="mypageLink" style="display: none;">마이페이지</a>
+        </div>
+        <!-- 비로그인 -->
+        <div class="auth-links" id="authLinks">
+          <a href="login.html" class="login-link">로그인</a>
+          <a href="signup.html" class="signup-link">회원가입</a>
+        </div>
+        <!-- 로그인 상태 -->
+        <div id="userArea" style="display: none; align-items: center; gap: 12px;">
+          <span class="user-name" id="userName"></span>
+          <button class="btn-logout" id="logoutBtn">로그아웃</button>
+        </div>
+      </nav>
+
+      <header class="header" style="border-radius: 0;">
         <h1>강의 결제</h1>
         <p>원하시는 강의를 선택하고 결제를 진행해주세요.</p>
       </header>
@@ -29,65 +90,6 @@
             <h2 class="section-title">강의 선택</h2>
             <div id="productList" class="product-list">
               <!-- 상품 목록이 여기에 렌더링됩니다 -->
-            </div>
-          </section>
-
-          <!-- 고객 정보 -->
-          <section class="section">
-            <h2 class="section-title">수강생 정보</h2>
-
-            <div class="form-group">
-              <label for="customerName"
-                >이름 <span class="required">*</span></label
-              >
-              <input
-                type="text"
-                id="customerName"
-                name="customerName"
-                placeholder="홍길동"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="customerPhone"
-                >휴대폰 번호 <span class="required">*</span></label
-              >
-              <input
-                type="tel"
-                id="customerPhone"
-                name="customerPhone"
-                placeholder="010-1234-5678"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="customerEmail"
-                >이메일 <span class="required">*</span></label
-              >
-              <input
-                type="email"
-                id="customerEmail"
-                name="customerEmail"
-                placeholder="example@email.com"
-                required
-              />
-              <p class="hint">결제 완료 후 이메일로 안내가 발송됩니다.</p>
-            </div>
-
-            <div class="form-group">
-              <label for="customerBirth"
-                >생년월일 <span class="required">*</span></label
-              >
-              <input
-                type="text"
-                id="customerBirth"
-                name="customerBirth"
-                placeholder="1990-01-15"
-                required
-              />
-              <p class="hint">YYYY-MM-DD 형식으로 입력해주세요.</p>
             </div>
           </section>
 

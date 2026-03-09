@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원가입 - Prep Education</title>
+    <link rel="stylesheet" href="css/payment.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>회원가입</h1>
+        <p>Prep Education에 오신 것을 환영합니다.</p>
+      </header>
+
+      <main class="main-content">
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="signupForm">
+          <section class="section">
+            <h2 class="section-title">회원 정보</h2>
+
+            <div class="form-group">
+              <label for="email">이메일 <span class="required">*</span></label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="example@email.com"
+                required
+              />
+              <p class="hint">결제 완료 후 인증 코드가 이 이메일로 발송됩니다. 정확히 입력해주세요.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="password">비밀번호 <span class="required">*</span></label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="6자 이상"
+                minlength="6"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="passwordConfirm">비밀번호 확인 <span class="required">*</span></label>
+              <input
+                type="password"
+                id="passwordConfirm"
+                name="passwordConfirm"
+                placeholder="비밀번호 재입력"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="name">이름 <span class="required">*</span></label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="홍길동"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">휴대폰 번호 <span class="required">*</span></label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="010-1234-5678"
+                required
+              />
+            </div>
+          </section>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary">
+            회원가입
+          </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 20px; color: #6b7280;">
+          이미 계정이 있으신가요?
+          <a href="login.html" style="color: #2563eb; text-decoration: none; font-weight: 600;">로그인</a>
+        </p>
+      </main>
+    </div>
+
+    <script>
+      (function() {
+        const API_BASE_URL = '/prep/api';
+
+        // 이미 로그인 상태면 메인으로
+        if (localStorage.getItem('token')) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // 전화번호 포맷팅
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            if (value.length > 7) {
+                value = value.replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{3})(\d+)/, '$1-$2');
+            }
+            e.target.value = value;
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.classList.remove('active');
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            // 유효성 검사
+            if (!email || !password || !name || !phone) {
+                errorEl.textContent = '모든 필수 정보를 입력해주세요.';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                errorEl.textContent = '비밀번호가 일치하지 않습니다.';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (password.length < 6) {
+                errorEl.textContent = '비밀번호는 6자 이상이어야 합니다.';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '처리 중...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name, phone })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'index.html';
+                } else {
+                    errorEl.textContent = data.message;
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                errorEl.textContent = '서버 연결에 실패했습니다.';
+                errorEl.classList.add('active');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '회원가입';
+            }
+        });
+      })();
+    </script>
+  </body>
+</html>

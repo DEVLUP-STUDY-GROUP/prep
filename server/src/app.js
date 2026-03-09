@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const { testConnection } = require('./config/database');
 const paymentRoutes = require('./routes/payment');
+const userRoutes = require('./routes/user');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // 라우트
 app.use('/api', paymentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 헬스 체크
 app.get('/health', (req, res) => {

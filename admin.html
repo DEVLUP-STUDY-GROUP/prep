@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 - Prep Education</title>
+    <link rel="stylesheet" href="css/payment.css" />
+    <style>
+      .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        max-width: 800px;
+        margin: 0 auto;
+        border-radius: 12px 12px 0 0;
+      }
+      .nav-bar a {
+        color: #4b5563;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      .nav-bar a:hover { color: #2563eb; }
+      .btn-logout {
+        background: none;
+        border: 1px solid #d1d5db;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
+      .btn-logout:hover { background: #f3f4f6; }
+
+      .container { max-width: 800px; }
+
+      .upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 20px;
+        transition: border-color 0.2s;
+      }
+      .upload-area:hover { border-color: #2563eb; }
+      .upload-area input[type="file"] { display: none; }
+      .upload-area label {
+        cursor: pointer;
+        color: #2563eb;
+        font-weight: 600;
+      }
+      .upload-area p { color: #6b7280; font-size: 0.9rem; margin-top: 8px; }
+
+      .file-name {
+        margin-top: 8px;
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .form-row .form-group { flex: 1; margin-bottom: 0; }
+
+      select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: white;
+      }
+      select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .batch-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .batch-card:hover { border-color: #2563eb; }
+      .batch-card .batch-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .batch-card .batch-name { font-weight: 600; color: #1f2937; }
+      .batch-card .batch-product { color: #2563eb; font-size: 0.85rem; font-weight: 500; }
+      .batch-card .batch-stats {
+        display: flex;
+        gap: 16px;
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+      .batch-card .batch-stats strong { color: #1f2937; }
+
+      .progress-bar {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .progress-bar .fill {
+        height: 100%;
+        background: #2563eb;
+        border-radius: 3px;
+        transition: width 0.3s;
+      }
+
+      .success-msg {
+        background: #ecfdf5;
+        color: #047857;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+      }
+      .success-msg.active { display: block; }
+
+      .tab-buttons {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .tab-btn {
+        padding: 10px 20px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+      .tab-btn.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+      }
+
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+
+      .empty-state { text-align: center; padding: 40px; color: #9ca3af; }
+
+      /* 배치 상세 모달 */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-overlay.active { display: flex; }
+      .modal {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 700px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .modal h3 { margin-bottom: 16px; }
+      .modal .close-btn {
+        float: right;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6b7280;
+      }
+
+      .code-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      .code-table th, .code-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+      }
+      .code-table th { background: #f9fafb; font-weight: 600; }
+      .code-status-AVAILABLE { color: #047857; }
+      .code-status-ASSIGNED { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="padding-top: 0;">
+      <nav class="nav-bar">
+        <div>
+          <a href="index.html">메인</a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-weight: 600; color: #1f2937;">관리자</span>
+          <button class="btn-logout" id="logoutBtn">로그아웃</button>
+        </div>
+      </nav>
+
+      <header class="header" style="border-radius: 0; background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
+        <h1>관리자 페이지</h1>
+        <p>인증 코드 관리 시스템</p>
+      </header>
+
+      <main class="main-content">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="upload">코드 등록</button>
+          <button class="tab-btn" data-tab="batches">배치 관리</button>
+        </div>
+
+        <!-- 코드 등록 탭 -->
+        <div id="tab-upload" class="tab-content active">
+          <div id="successMsg" class="success-msg"></div>
+          <div id="errorMessage" class="error-message"></div>
+
+          <form id="uploadForm">
+            <section class="section">
+              <h2 class="section-title">인증 코드 등록</h2>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="productId">상품 선택 <span class="required">*</span></label>
+                  <select id="productId" required>
+                    <option value="">상품을 선택하세요</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="batchName">배치명 <span class="required">*</span></label>
+                  <input type="text" id="batchName" placeholder="예: 2024년 3월 코드" required />
+                </div>
+              </div>
+
+              <div class="upload-area" id="dropZone">
+                <label for="csvFile">CSV 파일을 선택하거나 드래그하세요</label>
+                <input type="file" id="csvFile" accept=".csv" />
+                <p>한 줄에 하나의 인증 코드, 또는 code 컬럼이 있는 CSV</p>
+                <div id="fileName" class="file-name"></div>
+              </div>
+            </section>
+
+            <button type="submit" id="uploadBtn" class="btn btn-primary">
+              코드 등록
+            </button>
+          </form>
+        </div>
+
+        <!-- 배치 관리 탭 -->
+        <div id="tab-batches" class="tab-content">
+          <section class="section">
+            <h2 class="section-title">등록된 배치 목록</h2>
+            <div id="batchList">
+              <div class="loading active">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- 배치 상세 모달 -->
+    <div class="modal-overlay" id="batchModal">
+      <div class="modal">
+        <button class="close-btn" id="closeModal">&times;</button>
+        <h3 id="modalTitle">배치 상세</h3>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        const API_BASE_URL = '/prep/api';
+
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+        if (!token || !user || !user.isAdmin) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        // 로그아웃
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+
+        // 탭 전환
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(`tab-${this.dataset.tab}`).classList.add('active');
+
+                if (this.dataset.tab === 'batches') loadBatches();
+            });
+        });
+
+        // 상품 목록 로드
+        async function loadProducts() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/products`);
+                const data = await res.json();
+                if (data.success) {
+                    const select = document.getElementById('productId');
+                    data.products.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.id;
+                        option.textContent = `${p.name} (${p.price.toLocaleString('ko-KR')}원)`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('상품 로드 실패:', error);
+            }
+        }
+
+        // 파일 선택
+        const csvFileInput = document.getElementById('csvFile');
+        const dropZone = document.getElementById('dropZone');
+
+        dropZone.addEventListener('click', () => csvFileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#2563eb'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#d1d5db'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#d1d5db';
+            if (e.dataTransfer.files[0]) {
+                csvFileInput.files = e.dataTransfer.files;
+                document.getElementById('fileName').textContent = e.dataTransfer.files[0].name;
+            }
+        });
+        csvFileInput.addEventListener('change', function() {
+            document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : '';
+        });
+
+        // 코드 업로드
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const errorEl = document.getElementById('errorMessage');
+            const successEl = document.getElementById('successMsg');
+            errorEl.classList.remove('active');
+            successEl.classList.remove('active');
+
+            const productId = document.getElementById('productId').value;
+            const batchName = document.getElementById('batchName').value.trim();
+            const file = csvFileInput.files[0];
+
+            if (!productId || !batchName || !file) {
+                errorEl.textContent = '모든 필수 항목을 입력하고 파일을 선택해주세요.';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '업로드 중...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('productId', productId);
+                formData.append('batchName', batchName);
+
+                const res = await fetch(`${API_BASE_URL}/admin/codes/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    successEl.textContent = data.message;
+                    successEl.classList.add('active');
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('fileName').textContent = '';
+                } else {
+                    errorEl.textContent = data.message;
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                errorEl.textContent = '서버 연결에 실패했습니다.';
+                errorEl.classList.add('active');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '코드 등록';
+            }
+        });
+
+        // 배치 목록 로드
+        async function loadBatches() {
+            const batchList = document.getElementById('batchList');
+            batchList.innerHTML = '<div class="loading active"><div class="spinner"></div></div>';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/admin/batches`, { headers });
+                const data = await res.json();
+
+                if (data.success && data.batches.length > 0) {
+                    batchList.innerHTML = data.batches.map(b => {
+                        const pct = b.total_count > 0 ? Math.round(b.assigned_count / b.total_count * 100) : 0;
+                        const date = new Date(b.created_at).toLocaleDateString('ko-KR');
+                        return `
+                            <div class="batch-card" data-batch-id="${b.id}">
+                                <div class="batch-header">
+                                    <span class="batch-name">${b.name}</span>
+                                    <span class="batch-product">${b.product_name}</span>
+                                </div>
+                                <div class="batch-stats">
+                                    <span>전체: <strong>${b.total_count}</strong>개</span>
+                                    <span>할당: <strong>${b.assigned_count}</strong>개</span>
+                                    <span>잔여: <strong>${b.total_count - b.assigned_count}</strong>개</span>
+                                    <span>${date}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="fill" style="width: ${pct}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // 배치 클릭 이벤트
+                    document.querySelectorAll('.batch-card').forEach(card => {
+                        card.addEventListener('click', () => showBatchDetail(card.dataset.batchId));
+                    });
+                } else {
+                    batchList.innerHTML = '<div class="empty-state"><p>등록된 배치가 없습니다.</p></div>';
+                }
+            } catch (error) {
+                batchList.innerHTML = '<p style="color: #dc2626; text-align: center;">데이터를 불러오는데 실패했습니다.</p>';
+            }
+        }
+
+        // 배치 상세 모달
+        async function showBatchDetail(batchId) {
+            const modal = document.getElementById('batchModal');
+            const content = document.getElementById('modalContent');
+            content.innerHTML = '<div class="loading active"><div class="spinner"></div></div>';
+            modal.classList.add('active');
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/admin/batches/${batchId}`, { headers });
+                const data = await res.json();
+
+                if (data.success) {
+                    const batch = data.batch;
+                    document.getElementById('modalTitle').textContent = batch.name;
+
+                    let tableHtml = `
+                        <p style="margin-bottom: 12px; color: #6b7280;">
+                            상품: <strong>${batch.product_name}</strong> |
+                            전체: <strong>${batch.total_count}</strong>개 |
+                            할당: <strong>${batch.assigned_count}</strong>개
+                        </p>
+                        <table class="code-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>코드</th>
+                                    <th>상태</th>
+                                    <th>할당 대상</th>
+                                    <th>할당일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    batch.codes.forEach((c, i) => {
+                        const statusText = { AVAILABLE: '사용가능', ASSIGNED: '할당됨', EXPIRED: '만료' };
+                        const assignedDate = c.assigned_at ? new Date(c.assigned_at).toLocaleDateString('ko-KR') : '-';
+                        const assignedUser = c.assigned_user_email ? `${c.assigned_user_name} (${c.assigned_user_email})` : '-';
+
+                        tableHtml += `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td><code>${c.code}</code></td>
+                                <td class="code-status-${c.status}">${statusText[c.status]}</td>
+                                <td>${assignedUser}</td>
+                                <td>${assignedDate}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHtml += '</tbody></table>';
+                    content.innerHTML = tableHtml;
+                }
+            } catch (error) {
+                content.innerHTML = '<p style="color: #dc2626;">데이터를 불러오는데 실패했습니다.</p>';
+            }
+        }
+
+        // 모달 닫기
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('batchModal').classList.remove('active');
+        });
+        document.getElementById('batchModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('batchModal')) {
+                document.getElementById('batchModal').classList.remove('active');
+            }
+        });
+
+        // 초기화
+        loadProducts();
+      })();
+    </script>
+  </body>
+</html>

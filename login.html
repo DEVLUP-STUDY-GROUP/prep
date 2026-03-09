@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>로그인 - Prep Education</title>
+    <link rel="stylesheet" href="css/payment.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>로그인</h1>
+        <p>Prep Education에 로그인하세요.</p>
+      </header>
+
+      <main class="main-content">
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm">
+          <section class="section">
+            <div class="form-group">
+              <label for="email">이메일</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="example@email.com"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="password">비밀번호</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="비밀번호 입력"
+                required
+              />
+            </div>
+          </section>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary">
+            로그인
+          </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 20px; color: #6b7280;">
+          계정이 없으신가요?
+          <a href="signup.html" style="color: #2563eb; text-decoration: none; font-weight: 600;">회원가입</a>
+        </p>
+      </main>
+    </div>
+
+    <script>
+      (function() {
+        const API_BASE_URL = '/prep/api';
+
+        // 이미 로그인 상태면 메인으로
+        if (localStorage.getItem('token')) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.classList.remove('active');
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                errorEl.textContent = '이메일과 비밀번호를 입력해주세요.';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '로그인 중...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    // 관리자면 관리자 페이지로, 아니면 메인으로
+                    if (data.user.isAdmin) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    errorEl.textContent = data.message;
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                errorEl.textContent = '서버 연결에 실패했습니다.';
+                errorEl.classList.add('active');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '로그인';
+            }
+        });
+      })();
+    </script>
+  </body>
+</html>

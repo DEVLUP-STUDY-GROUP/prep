@@ -22,8 +22,44 @@
         loading: document.getElementById('loading')
     };
 
+    // 인증 헤더
+    function getAuthHeaders() {
+        const token = localStorage.getItem('token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+
+    function isLoggedIn() {
+        return !!localStorage.getItem('token');
+    }
+
+    // 네비게이션 상태 업데이트
+    function updateNav() {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const authLinks = document.getElementById('authLinks');
+        const userArea = document.getElementById('userArea');
+        const mypageLink = document.getElementById('mypageLink');
+        const userName = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if (user && authLinks && userArea) {
+            authLinks.style.display = 'none';
+            userArea.style.display = 'flex';
+            if (userName) userName.textContent = user.name + '님';
+            if (mypageLink) mypageLink.style.display = 'inline';
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.reload();
+                });
+            }
+        }
+    }
+
     // 초기화
     async function init() {
+        updateNav();
         await loadProducts();
         setupEventListeners();
     }
@@ -72,17 +108,12 @@
 
     // 상품 선택
     function selectProduct(item) {
-        // 이전 선택 해제
         document.querySelectorAll('.product-item').forEach(p => p.classList.remove('selected'));
-
-        // 새로운 선택
         item.classList.add('selected');
         item.querySelector('input[type="radio"]').checked = true;
 
         const productId = parseInt(item.dataset.productId);
         selectedProduct = products.find(p => p.id === productId);
-
-        // 총액 업데이트
         updateTotalAmount();
     }
 
@@ -98,46 +129,6 @@
         if (elements.customerForm) {
             elements.customerForm.addEventListener('submit', handlePayment);
         }
-
-        // 전화번호 자동 포맷팅
-        const phoneInput = document.getElementById('customerPhone');
-        if (phoneInput) {
-            phoneInput.addEventListener('input', formatPhoneNumber);
-        }
-
-        // 생년월일 자동 포맷팅
-        const birthInput = document.getElementById('customerBirth');
-        if (birthInput) {
-            birthInput.addEventListener('input', formatBirthDate);
-        }
-    }
-
-    // 전화번호 포맷팅
-    function formatPhoneNumber(e) {
-        let value = e.target.value.replace(/[^0-9]/g, '');
-        if (value.length > 11) value = value.slice(0, 11);
-
-        if (value.length > 7) {
-            value = value.replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
-        } else if (value.length > 3) {
-            value = value.replace(/(\d{3})(\d+)/, '$1-$2');
-        }
-
-        e.target.value = value;
-    }
-
-    // 생년월일 포맷팅
-    function formatBirthDate(e) {
-        let value = e.target.value.replace(/[^0-9]/g, '');
-        if (value.length > 8) value = value.slice(0, 8);
-
-        if (value.length > 6) {
-            value = value.replace(/(\d{4})(\d{2})(\d+)/, '$1-$2-$3');
-        } else if (value.length > 4) {
-            value = value.replace(/(\d{4})(\d+)/, '$1-$2');
-        }
-
-        e.target.value = value;
     }
 
     // 결제 처리
@@ -145,33 +136,33 @@
         e.preventDefault();
         hideError();
 
+        // 로그인 확인
+        if (!isLoggedIn()) {
+            showError('결제를 진행하려면 로그인이 필요합니다.');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+            return;
+        }
+
         // 상품 선택 확인
         if (!selectedProduct) {
             showError('상품을 선택해주세요.');
             return;
         }
 
-        // 폼 데이터 수집
-        const formData = {
-            productId: selectedProduct.id,
-            customerName: document.getElementById('customerName').value.trim(),
-            customerPhone: document.getElementById('customerPhone').value.trim(),
-            customerEmail: document.getElementById('customerEmail').value.trim(),
-            customerBirth: document.getElementById('customerBirth').value.trim()
-        };
-
-        // 유효성 검사
-        if (!validateForm(formData)) return;
-
         try {
             showLoading(true);
             disablePayButton(true);
 
-            // 1. 주문 생성
+            // 1. 주문 생성 (로그인 사용자 정보 사용)
             const orderResponse = await fetch(`${CONFIG.API_BASE_URL}/payments`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify({ productId: selectedProduct.id })
             });
 
             const orderData = await orderResponse.json();
@@ -190,31 +181,6 @@
             showLoading(false);
             disablePayButton(false);
         }
-    }
-
-    // 폼 유효성 검사
-    function validateForm(data) {
-        if (!data.customerName) {
-            showError('이름을 입력해주세요.');
-            return false;
-        }
-
-        if (!data.customerPhone || !/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(data.customerPhone.replace(/-/g, ''))) {
-            showError('올바른 휴대폰 번호를 입력해주세요.');
-            return false;
-        }
-
-        if (!data.customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.customerEmail)) {
-            showError('올바른 이메일 주소를 입력해주세요.');
-            return false;
-        }
-
-        if (!data.customerBirth || !/^\d{4}-\d{2}-\d{2}$/.test(data.customerBirth)) {
-            showError('생년월일을 YYYY-MM-DD 형식으로 입력해주세요.');
-            return false;
-        }
-
-        return true;
     }
 
     // 토스 페이먼츠 결제 요청
@@ -256,7 +222,10 @@
         try {
             const response = await fetch(`${CONFIG.API_BASE_URL}/payments/confirm`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
                 body: JSON.stringify({ paymentKey, orderId, amount: parseInt(amount) })
             });
 

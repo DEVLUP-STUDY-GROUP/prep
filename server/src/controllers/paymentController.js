@@ -1,5 +1,7 @@
 const productModel = require('../models/product');
 const paymentModel = require('../models/payment');
+const authCodeModel = require('../models/authCode');
+const userModel = require('../models/user');
 const tossPayments = require('../services/tossPayments');
 const emailService = require('../services/emailService');
 
@@ -16,35 +18,17 @@ async function getProducts(req, res, next) {
 }
 
 /**
- * 결제 요청 (주문 생성)
+ * 결제 요청 (주문 생성) - 로그인 필수
  */
 async function createPayment(req, res, next) {
     try {
-        const { productId, customerName, customerPhone, customerEmail, customerBirth } = req.body;
+        const { productId } = req.body;
+        const userId = req.user.id;
 
-        // 필수 필드 검증
-        if (!productId || !customerName || !customerPhone || !customerEmail || !customerBirth) {
+        if (!productId) {
             return res.status(400).json({
                 success: false,
-                message: '필수 정보를 모두 입력해주세요.'
-            });
-        }
-
-        // 이메일 형식 검증
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(customerEmail)) {
-            return res.status(400).json({
-                success: false,
-                message: '올바른 이메일 주소를 입력해주세요.'
-            });
-        }
-
-        // 전화번호 형식 검증
-        const phoneRegex = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
-        if (!phoneRegex.test(customerPhone.replace(/-/g, ''))) {
-            return res.status(400).json({
-                success: false,
-                message: '올바른 휴대폰 번호를 입력해주세요.'
+                message: '상품을 선택해주세요.'
             });
         }
 
@@ -57,18 +41,24 @@ async function createPayment(req, res, next) {
             });
         }
 
+        // 사용 가능한 코드가 있는지 확인
+        const availableCount = await authCodeModel.getAvailableCodeCount(productId);
+        if (availableCount === 0) {
+            return res.status(400).json({
+                success: false,
+                message: '현재 해당 상품의 인증 코드가 모두 소진되었습니다. 관리자에게 문의해주세요.'
+            });
+        }
+
         // 주문번호 생성
         const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         // 주문 저장
         await paymentModel.createPayment({
             orderId,
+            userId,
             productId,
-            amount: product.price,
-            customerName,
-            customerPhone,
-            customerEmail,
-            customerBirth
+            amount: product.price
         });
 
         res.json({
@@ -89,7 +79,6 @@ async function confirmPayment(req, res, next) {
     try {
         const { paymentKey, orderId, amount } = req.body;
 
-        // 필수 필드 검증
         if (!paymentKey || !orderId || !amount) {
             return res.status(400).json({
                 success: false,
@@ -136,19 +125,37 @@ async function confirmPayment(req, res, next) {
         // 결제 완료 업데이트
         await paymentModel.updatePaymentConfirmed(orderId, paymentKey, result.data);
 
-        // 이메일 발송 (비동기 - 실패해도 결제는 성공 처리)
-        emailService.sendPaymentConfirmationEmail({
-            customerName: payment.customer_name,
-            customerEmail: payment.customer_email,
-            productName: payment.product_name,
-            amount: payment.amount,
-            orderId,
-            paidAt: new Date()
-        }).catch(err => console.error('이메일 발송 실패:', err));
+        // 인증 코드 할당
+        let assignedCode = null;
+        try {
+            assignedCode = await authCodeModel.assignCodeToPayment(
+                payment.product_id,
+                payment.user_id,
+                payment.id
+            );
+        } catch (codeError) {
+            console.error('인증 코드 할당 실패:', codeError);
+        }
+
+        // 사용자 정보 조회 후 이메일 발송 (비동기)
+        userModel.getUserById(payment.user_id).then(user => {
+            if (user) {
+                emailService.sendPaymentConfirmationEmail({
+                    customerEmail: user.email,
+                    customerName: user.name,
+                    productName: payment.product_name,
+                    amount: payment.amount,
+                    orderId,
+                    paidAt: new Date(),
+                    authCode: assignedCode
+                }).catch(err => console.error('이메일 발송 실패:', err));
+            }
+        }).catch(err => console.error('사용자 조회 실패:', err));
 
         res.json({
             success: true,
-            message: '결제가 완료되었습니다.'
+            message: '결제가 완료되었습니다.',
+            authCode: assignedCode
         });
     } catch (error) {
         next(error);
@@ -170,6 +177,9 @@ async function getPaymentStatus(req, res, next) {
             });
         }
 
+        // 할당된 코드 조회
+        const codeInfo = await authCodeModel.getCodeByPaymentId(payment.id);
+
         res.json({
             success: true,
             payment: {
@@ -177,8 +187,8 @@ async function getPaymentStatus(req, res, next) {
                 productName: payment.product_name,
                 amount: payment.amount,
                 status: payment.status,
-                customerName: payment.customer_name,
-                paidAt: payment.paid_at
+                paidAt: payment.paid_at,
+                authCode: codeInfo?.code || null
             }
         });
     } catch (error) {
