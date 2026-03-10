@@ -6,7 +6,7 @@ function generateToken(user) {
     return jwt.sign(
         { id: user.id, email: user.email, isAdmin: user.is_admin },
         JWT_SECRET,
-        { expiresIn: '7d' }
+        { expiresIn: '2h' }
     );
 }
 
