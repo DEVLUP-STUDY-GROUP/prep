@@ -32,4 +32,13 @@ router.get('/batches/:batchId', adminController.getBatchDetail);
 // 상품별 사용 가능 코드 수 조회
 router.get('/codes/available/:productId', adminController.getAvailableCount);
 
+// 상품 목록 조회 (관리자용)
+router.get('/products', adminController.getProducts);
+
+// 상품 추가
+router.post('/products', adminController.createProduct);
+
+// 상품 활성/비활성 토글
+router.patch('/products/:productId/toggle', adminController.toggleProduct);
+
 module.exports = router;

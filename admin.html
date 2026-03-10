@@ -198,6 +198,39 @@
       .code-table th { background: #f9fafb; font-weight: 600; }
       .code-status-AVAILABLE { color: #047857; }
       .code-status-ASSIGNED { color: #2563eb; }
+
+      .product-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .product-card .product-info { flex: 1; }
+      .product-card .product-name { font-weight: 600; color: #1f2937; }
+      .product-card .product-price { color: #2563eb; font-weight: 500; margin-top: 4px; }
+      .product-card .product-desc { color: #6b7280; font-size: 0.85rem; margin-top: 4px; }
+      .product-card .product-status {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 500;
+      }
+      .product-card .status-active { background: #ecfdf5; color: #047857; }
+      .product-card .status-inactive { background: #fef2f2; color: #dc2626; }
+      .btn-toggle {
+        background: none;
+        border: 1px solid #d1d5db;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-left: 8px;
+      }
+      .btn-toggle:hover { background: #f3f4f6; }
     </style>
   </head>
   <body>
@@ -221,6 +254,7 @@
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="upload">코드 등록</button>
           <button class="tab-btn" data-tab="batches">배치 관리</button>
+          <button class="tab-btn" data-tab="products">상품 관리</button>
         </div>
 
         <!-- 코드 등록 탭 -->
@@ -251,6 +285,13 @@
                 <p>한 줄에 하나의 인증 코드, 또는 code 컬럼이 있는 CSV</p>
                 <div id="fileName" class="file-name"></div>
               </div>
+
+              <p style="text-align: center; margin-bottom: 20px;">
+                <a href="templates/auth_codes_template.csv" download="인증코드_템플릿.csv"
+                   style="color: #2563eb; font-size: 0.9rem; text-decoration: none; font-weight: 500;">
+                  CSV 템플릿 다운로드
+                </a>
+              </p>
             </section>
 
             <button type="submit" id="uploadBtn" class="btn btn-primary">
@@ -267,6 +308,37 @@
               <div class="loading active">
                 <div class="spinner"></div>
               </div>
+            </div>
+          </section>
+        </div>
+        <!-- 상품 관리 탭 -->
+        <div id="tab-products" class="tab-content">
+          <section class="section">
+            <h2 class="section-title">상품 등록</h2>
+            <div id="productSuccessMsg" class="success-msg"></div>
+            <div id="productErrorMsg" class="error-message"></div>
+
+            <form id="productForm">
+              <div class="form-group">
+                <label for="productName">상품명 <span class="required">*</span></label>
+                <input type="text" id="productName" placeholder="예: React 완벽 가이드" required />
+              </div>
+              <div class="form-group">
+                <label for="productPrice">가격 (원) <span class="required">*</span></label>
+                <input type="number" id="productPrice" placeholder="예: 50000" min="0" required />
+              </div>
+              <div class="form-group">
+                <label for="productDescription">상품 설명</label>
+                <input type="text" id="productDescription" placeholder="상품에 대한 간단한 설명" />
+              </div>
+              <button type="submit" id="productSubmitBtn" class="btn btn-primary">상품 등록</button>
+            </form>
+          </section>
+
+          <section class="section" style="margin-top: 24px;">
+            <h2 class="section-title">등록된 상품 목록</h2>
+            <div id="productList">
+              <div class="loading active"><div class="spinner"></div></div>
             </div>
           </section>
         </div>
@@ -312,6 +384,7 @@
                 document.getElementById(`tab-${this.dataset.tab}`).classList.add('active');
 
                 if (this.dataset.tab === 'batches') loadBatches();
+                if (this.dataset.tab === 'products') loadProductList();
             });
         });
 
@@ -519,6 +592,111 @@
                 document.getElementById('batchModal').classList.remove('active');
             }
         });
+
+        // 상품 등록
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('productErrorMsg');
+            const successEl = document.getElementById('productSuccessMsg');
+            errorEl.classList.remove('active');
+            successEl.classList.remove('active');
+
+            const name = document.getElementById('productName').value.trim();
+            const price = document.getElementById('productPrice').value;
+            const description = document.getElementById('productDescription').value.trim();
+
+            if (!name || !price) {
+                errorEl.textContent = '상품명과 가격은 필수입니다.';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            const btn = document.getElementById('productSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = '등록 중...';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/admin/products`, {
+                    method: 'POST',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, price: parseInt(price), description: description || null })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    successEl.textContent = data.message;
+                    successEl.classList.add('active');
+                    document.getElementById('productForm').reset();
+                    loadProductList();
+                    // 코드 등록 탭의 상품 select도 갱신
+                    const select = document.getElementById('productId');
+                    select.innerHTML = '<option value="">상품을 선택하세요</option>';
+                    loadProducts();
+                } else {
+                    errorEl.textContent = data.message;
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                errorEl.textContent = '서버 연결에 실패했습니다.';
+                errorEl.classList.add('active');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '상품 등록';
+            }
+        });
+
+        // 상품 목록 로드 (관리자용)
+        async function loadProductList() {
+            const listEl = document.getElementById('productList');
+            listEl.innerHTML = '<div class="loading active"><div class="spinner"></div></div>';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/admin/products`, { headers });
+                const data = await res.json();
+
+                if (data.success && data.products.length > 0) {
+                    listEl.innerHTML = data.products.map(p => {
+                        const statusClass = p.is_active ? 'status-active' : 'status-inactive';
+                        const statusText = p.is_active ? '판매중' : '비활성';
+                        return `
+                            <div class="product-card">
+                                <div class="product-info">
+                                    <div class="product-name">${p.name}</div>
+                                    <div class="product-price">${parseInt(p.price).toLocaleString('ko-KR')}원</div>
+                                    ${p.description ? `<div class="product-desc">${p.description}</div>` : ''}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="product-status ${statusClass}">${statusText}</span>
+                                    <button class="btn-toggle" data-product-id="${p.id}">
+                                        ${p.is_active ? '비활성화' : '활성화'}
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // 토글 버튼 이벤트
+                    document.querySelectorAll('.btn-toggle').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            try {
+                                const res = await fetch(`${API_BASE_URL}/admin/products/${btn.dataset.productId}/toggle`, {
+                                    method: 'PATCH',
+                                    headers
+                                });
+                                const data = await res.json();
+                                if (data.success) loadProductList();
+                            } catch (error) {
+                                console.error('상태 변경 실패:', error);
+                            }
+                        });
+                    });
+                } else {
+                    listEl.innerHTML = '<div class="empty-state"><p>등록된 상품이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                listEl.innerHTML = '<p style="color: #dc2626; text-align: center;">데이터를 불러오는데 실패했습니다.</p>';
+            }
+        }
 
         // 초기화
         loadProducts();

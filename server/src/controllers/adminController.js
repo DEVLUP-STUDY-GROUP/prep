@@ -125,9 +125,77 @@ async function getAvailableCount(req, res, next) {
     }
 }
 
+/**
+ * 모든 상품 조회 (관리자용)
+ */
+async function getProducts(req, res, next) {
+    try {
+        const products = await productModel.getAllProducts();
+        res.json({ success: true, products });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * 상품 추가
+ */
+async function createProduct(req, res, next) {
+    try {
+        const { name, price, description } = req.body;
+
+        if (!name || price === undefined || price === null) {
+            return res.status(400).json({
+                success: false,
+                message: '상품명과 가격은 필수입니다.'
+            });
+        }
+
+        const parsedPrice = parseInt(price);
+        if (isNaN(parsedPrice) || parsedPrice < 0) {
+            return res.status(400).json({
+                success: false,
+                message: '유효한 가격을 입력해주세요.'
+            });
+        }
+
+        const productId = await productModel.createProduct({
+            name: name.trim(),
+            price: parsedPrice,
+            description: description ? description.trim() : null
+        });
+
+        res.status(201).json({
+            success: true,
+            message: '상품이 등록되었습니다.',
+            productId
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * 상품 활성/비활성 토글
+ */
+async function toggleProduct(req, res, next) {
+    try {
+        const updated = await productModel.toggleProductActive(req.params.productId);
+        if (!updated) {
+            return res.status(404).json({ success: false, message: '상품을 찾을 수 없습니다.' });
+        }
+        res.json({ success: true, message: '상품 상태가 변경되었습니다.' });
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
     uploadCodes,
     getBatches,
     getBatchDetail,
-    getAvailableCount
+    getAvailableCount,
+    getProducts,
+    createProduct,
+    toggleProduct
 };
