@@ -19,7 +19,8 @@ pipeline {
                 withCredentials([file(credentialsId: 'prep-env-file', variable: 'ENV_FILE')]) {
                     sshagent(['prep-dev-deploy-ssh-key']) {
                         sh '''
-                            # .env 파일을 서버로 전송
+                            # 기존 .env 파일 제거 후 전송
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} "rm -f /tmp/prep.env"
                             scp -o StrictHostKeyChecking=no ${ENV_FILE} ${SSH_USER}@${SSH_HOST}:/tmp/prep.env
 
                             ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} << 'ENDSSH'
