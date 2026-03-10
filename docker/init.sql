@@ -105,4 +105,4 @@ VALUES (
 -- 관리자 계정 (비밀번호: admin1234 → bcrypt 해시)
 -- 실제 배포 시 반드시 비밀번호 변경 필요
 INSERT INTO tb_prep_users (email, password, name, phone, is_admin)
-VALUES ('admin@prep.co.kr', '$2b$10$placeholder_hash_change_me', '관리자', '010-0000-0000', TRUE);
+VALUES ('admin@prep.co.kr', '$2b$10$FWBJG4CXc5bPZejhjrB1b.cuQOjVglR6JGlWqNOeQXwZeq.hl3QKq', '관리자', '010-0000-0000', TRUE);
