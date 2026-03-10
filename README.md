@@ -184,13 +184,32 @@ pm2 save
 
 `develop` 브랜치에 push하면 자동 배포됩니다.
 
-**배포 흐름:**
+#### Jenkins .env 파일 등록
+
+Jenkinsfile에서 `prep-env-file` Credential ID로 `.env` 파일을 참조합니다.
+Jenkins에 아래와 같이 등록해야 합니다.
+
+1. Jenkins 관리 > Credentials > System > Global credentials
+2. **Add Credentials** 클릭
+3. 아래 항목 입력:
+   - **Kind**: `Secret file`
+   - **File**: 로컬에서 작성한 `.env` 파일 업로드
+   - **ID**: `prep-env-file`
+   - **Description**: `Prep 환경변수 파일`
+4. **Create** 클릭
+
+`.env` 파일 내용은 [2-2. 환경 변수 설정](#2-2-환경-변수-설정)을 참고하세요.
+환경 변수가 변경되면 Jenkins에서 해당 Credential을 업데이트한 후 재배포하면 됩니다.
+
+#### 배포 흐름
+
 1. GitHub `develop` 브랜치 push
 2. Jenkins Webhook 트리거
-3. 서버에서 `git reset --hard origin/develop`
-4. `.env` 파일 복사 (Jenkins Credentials)
-5. `npm install --omit=dev`
-6. PM2 재시작
+3. Jenkins가 `.env` 파일을 서버로 SCP 전송
+4. 서버에서 `git reset --hard origin/develop`
+5. `.env` 파일을 `server/.env`로 이동
+6. `npm install --omit=dev`
+7. PM2 재시작 (`pm2 restart prep`)
 
 ### PM2 명령어
 
