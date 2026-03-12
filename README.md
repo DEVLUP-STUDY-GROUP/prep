@@ -94,7 +94,7 @@ vi /app/service/prep/server/.env
 ```
 
 ```env
-PORT=3000
+PORT=3001
 NODE_ENV=development
 
 DB_HOST=localhost
