@@ -146,7 +146,7 @@ server {
 
     # Prep API 프록시
     location /prep/api/ {
-        proxy_pass http://127.0.0.1:3000/api/;
+        proxy_pass http://127.0.0.1:3001/api/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
