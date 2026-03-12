@@ -289,14 +289,14 @@ pm2 save
 
 ## 개발 서버 vs 상용 서버 차이점
 
-| 항목 | 개발 서버 | 상용 서버 |
-|------|-----------|-----------|
-| 브랜치 | `develop` | `main` |
-| 배포 방식 | Jenkins 자동 배포 (`Jenkinsfile`) | Jenkins 자동 배포 (`Jenkinsfile.prod`) |
-| URL | `http://115.68.179.155/prep/` | `http://prep.event-promotion.co.kr/` |
-| URL prefix | `/prep/` | `/` (없음) |
-| Nginx 설정 파일 | `nginx.conf` | `nginx.prod.conf` |
-| Jenkins Credential | `prep-env-dev` | `prep-env-prod` |
-| NODE_ENV | `development` | `production` |
-| 토스 키 | 테스트 키 (`test_`) | 라이브 키 (`live_`) |
-| PM2 모드 | 단일 프로세스 | 클러스터 모드 (`-i max`) |
+| 항목 | 개발 서버                             | 상용 서버 |
+|------|-----------------------------------|-----------|
+| 브랜치 | `develop`                         | `main` |
+| 배포 방식 | Jenkins 자동 배포 (`Jenkinsfile.dev`) | Jenkins 자동 배포 (`Jenkinsfile.prod`) |
+| URL | `http://115.68.179.155/prep/`     | `http://prep.event-promotion.co.kr/` |
+| URL prefix | `/prep/`                          | `/` (없음) |
+| Nginx 설정 파일 | `nginx.dev.conf`                  | `nginx.prod.conf` |
+| Jenkins Credential | `prep-env-dev`                    | `prep-env-prod` |
+| NODE_ENV | `development`                     | `production` |
+| 토스 키 | 테스트 키 (`test_`)                   | 라이브 키 (`live_`) |
+| PM2 모드 | 단일 프로세스                           | 클러스터 모드 (`-i max`) |
