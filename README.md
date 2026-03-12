@@ -21,9 +21,21 @@ prep/
 ├── js/                     # 프론트엔드 스크립트
 ├── templates/              # CSV 템플릿
 ├── docker-compose.yml
-├── Jenkinsfile
-└── nginx.conf
+├── Jenkinsfile             # CI/CD
+├── nginx.conf              # 개발 서버 Nginx 설정
+└── nginx.prod.conf         # 상용 서버 Nginx 설정
 ```
+
+### 환경별 URL 분기
+
+`js/common.js`에서 호스트명을 기준으로 API URL을 자동 분기합니다.
+
+| 환경 | 호스트 | API prefix |
+|------|--------|-----------|
+| 로컬 / 개발 서버 | 그 외 | `/prep/api` |
+| 상용 서버 | `prep.event-promotion.co.kr` | `/api` |
+
+토스페이먼츠 클라이언트 키(`TOSS_CLIENT_KEY`)는 서버 환경변수에서 관리하며, 프론트엔드는 `GET /api/config` 엔드포인트를 통해 로드합니다.
 
 ---
 
@@ -71,6 +83,7 @@ docker compose down -v
 ## 2. 개발 서버 (115.68.179.155)
 
 Nginx + PM2로 운영합니다. Jenkins CI/CD로 자동 배포됩니다.
+`/prep/` prefix로 서비스됩니다. (예: `http://115.68.179.155/prep/`)
 
 ### 2-1. 서버 초기 설정
 
@@ -116,52 +129,7 @@ SMTP_PASS=your_app_password
 
 ### 2-3. Nginx 설정
 
-기존 Nginx 설정 파일에 아래 location 블록을 추가합니다.
-
-```nginx
-server {
-    listen 80;
-    server_name 115.68.179.155;
-
-    # ... 기존 설정 (jenkins, n8n 등) ...
-
-    # Prep 정적 파일
-    location /prep/css/ {
-        alias /app/service/prep/css/;
-        expires 7d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    location /prep/js/ {
-        alias /app/service/prep/js/;
-        expires 7d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    location /prep/images/ {
-        alias /app/service/prep/images/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Prep API 프록시
-    location /prep/api/ {
-        proxy_pass http://127.0.0.1:3001/api/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Prep 메인 페이지
-    location /prep/ {
-        alias /app/service/prep/;
-        index index.html;
-        try_files $uri $uri/ /prep/index.html;
-    }
-}
-```
+`nginx.conf`를 참고해 기존 Nginx 설정에 location 블록을 추가합니다.
 
 ```bash
 sudo nginx -t
@@ -182,20 +150,22 @@ pm2 save
 
 ### 2-5. CI/CD (Jenkins)
 
-`develop` 브랜치에 push하면 자동 배포됩니다.
+`develop` 브랜치에 push하면 자동 배포됩니다. (`Jenkinsfile` 사용)
 
-#### Jenkins .env 파일 등록
+#### Jenkins Credentials 등록
 
-Jenkinsfile에서 `prep-env-file` Credential ID로 `.env` 파일을 참조합니다.
-Jenkins에 아래와 같이 등록해야 합니다.
+| Kind | ID | 설명 |
+|------|----|------|
+| Secret file | `prep-env-dev` | 개발 서버 `.env` 파일 |
+| SSH Username with private key | `prep-dev-deploy-ssh-key` | 개발 서버 SSH 키 |
 
 1. Jenkins 관리 > Credentials > System > Global credentials
 2. **Add Credentials** 클릭
-3. 아래 항목 입력:
+3. Secret file 항목 입력:
    - **Kind**: `Secret file`
    - **File**: 로컬에서 작성한 `.env` 파일 업로드
-   - **ID**: `prep-env-file`
-   - **Description**: `Prep 환경변수 파일`
+   - **ID**: `prep-env-dev`
+   - **Description**: `Prep 개발 환경변수 파일`
 4. **Create** 클릭
 
 `.env` 파일 내용은 [2-2. 환경 변수 설정](#2-2-환경-변수-설정)을 참고하세요.
@@ -222,59 +192,57 @@ pm2 stop prep        # 중지
 
 ---
 
-## 3. 상용 서버
+## 3. 상용 서버 (prep.event-promotion.co.kr)
 
-개발 서버와 동일한 구조(Nginx + PM2)를 사용하며, 아래 항목만 다르게 설정합니다.
+Nginx + PM2로 운영합니다. Jenkins CI/CD로 자동 배포됩니다.
+`/prep/` prefix 없이 루트(`/`)에서 서비스됩니다.
 
-### 3-1. 환경 변수 (.env)
+### 3-1. 서버 초기 설정
+
+개발 서버와 동일합니다.
+
+```bash
+sudo mkdir -p /app/service/prep
+sudo chown -R ec2-user:ec2-user /app/service/prep
+```
+
+### 3-2. 환경 변수 설정
+
+`server/.env.prod`를 참고해 작성합니다.
 
 ```env
 PORT=3000
 NODE_ENV=production
 
-DB_HOST=localhost
+DB_HOST=
 DB_PORT=3306
-DB_USER=prep
-DB_PASSWORD=강력한_비밀번호
-DB_NAME=riseone
+DB_USER=
+DB_PASSWORD=
+DB_NAME=
 
-JWT_SECRET=강력한_JWT_시크릿
+JWT_SECRET=
 
 TOSS_CLIENT_KEY=live_ck_xxx
 TOSS_SECRET_KEY=live_sk_xxx
 
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=production_email@gmail.com
-SMTP_PASS=production_app_password
+SMTP_USER=
+SMTP_PASS=
 ```
 
-### 3-2. Nginx 설정
+### 3-3. Nginx 설정
 
-개발 서버와 동일한 구조이며, `server_name`을 실제 도메인으로 변경합니다.
-SSL 인증서 적용을 권장합니다.
+`nginx.prod.conf`를 서버에 복사합니다.
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name your-domain.com;
-
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-
-    # 정적 파일 및 API 프록시 설정은 개발 서버와 동일
-    # ...
-}
-
-# HTTP → HTTPS 리다이렉트
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$host$request_uri;
-}
+```bash
+sudo cp /app/service/prep/nginx.prod.conf /etc/nginx/sites-available/prep-prod.conf
+sudo ln -s /etc/nginx/sites-available/prep-prod.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-### 3-3. PM2 설정
+### 3-4. PM2로 서버 실행
 
 ```bash
 cd /app/service/prep/server
@@ -285,19 +253,37 @@ pm2 startup
 pm2 save
 ```
 
-### 3-4. 상용 배포
+### 3-5. CI/CD (Jenkins)
 
-상용 서버는 `main` 브랜치 기준으로 수동 배포합니다.
+`main` 브랜치에 push하면 자동 배포됩니다. (`Jenkinsfile.prod` 사용)
 
-```bash
-cd /app/service/prep
-git fetch origin
-git reset --hard origin/main
+#### Jenkins Credentials 등록
 
-cd server
-npm install --omit=dev
-pm2 restart prep
-```
+| Kind | ID | 설명 |
+|------|----|------|
+| Secret file | `prep-env-prod` | 상용 서버 `.env` 파일 |
+| SSH Username with private key | `prep-prod-deploy-ssh-key` | 상용 서버 SSH 키 |
+
+1. Jenkins 관리 > Credentials > System > Global credentials
+2. **Add Credentials** 클릭
+3. Secret file 항목 입력:
+   - **Kind**: `Secret file`
+   - **File**: 로컬에서 작성한 `.env.prod` 파일 업로드
+   - **ID**: `prep-env-prod`
+   - **Description**: `Prep 상용 환경변수 파일`
+4. **Create** 클릭
+
+환경 변수가 변경되면 Jenkins에서 해당 Credential을 업데이트한 후 재배포하면 됩니다.
+
+#### 배포 흐름
+
+1. GitHub `main` 브랜치 push
+2. Jenkins Webhook 트리거
+3. Jenkins가 `.env` 파일을 서버로 SCP 전송
+4. 서버에서 `git reset --hard origin/main`
+5. `.env` 파일을 `server/.env`로 이동
+6. `npm install --omit=dev`
+7. PM2 재시작 (`pm2 restart prep`, 클러스터 모드)
 
 ---
 
@@ -306,8 +292,11 @@ pm2 restart prep
 | 항목 | 개발 서버 | 상용 서버 |
 |------|-----------|-----------|
 | 브랜치 | `develop` | `main` |
-| 배포 방식 | Jenkins 자동 배포 | 수동 배포 |
-| NODE_ENV | development | production |
-| 토스 키 | 테스트 키 (test_) | 라이브 키 (live_) |
+| 배포 방식 | Jenkins 자동 배포 (`Jenkinsfile`) | Jenkins 자동 배포 (`Jenkinsfile.prod`) |
+| URL | `http://115.68.179.155/prep/` | `http://prep.event-promotion.co.kr/` |
+| URL prefix | `/prep/` | `/` (없음) |
+| Nginx 설정 파일 | `nginx.conf` | `nginx.prod.conf` |
+| Jenkins Credential | `prep-env-dev` | `prep-env-prod` |
+| NODE_ENV | `development` | `production` |
+| 토스 키 | 테스트 키 (`test_`) | 라이브 키 (`live_`) |
 | PM2 모드 | 단일 프로세스 | 클러스터 모드 (`-i max`) |
-| SSL | 없음 | 적용 권장 |
