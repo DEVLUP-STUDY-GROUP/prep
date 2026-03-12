@@ -16,7 +16,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                withCredentials([file(credentialsId: 'prep-env-file', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: 'prep-env-dev', variable: 'ENV_FILE')]) {
                     sshagent(['prep-dev-deploy-ssh-key']) {
                         sh '''
                             # 기존 .env 파일 제거 후 전송
