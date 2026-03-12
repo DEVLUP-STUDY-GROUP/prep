@@ -21,8 +21,9 @@ prep/
 ├── js/                     # 프론트엔드 스크립트
 ├── templates/              # CSV 템플릿
 ├── docker-compose.yml
-├── Jenkinsfile             # CI/CD
-├── nginx.conf              # 개발 서버 Nginx 설정
+├── Jenkinsfile.dev         # 개발서버 CI/CD
+├── Jenkinsfile.prod        # 상용서버 CI/CD
+├── nginx.dev.conf          # 개발 서버 Nginx 설정
 └── nginx.prod.conf         # 상용 서버 Nginx 설정
 ```
 
