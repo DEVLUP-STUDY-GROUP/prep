@@ -24,3 +24,5 @@ build/
 
 # Archives
 *.zip
+
+.claude

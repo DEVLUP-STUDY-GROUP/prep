@@ -15,6 +15,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 클라이언트 설정 (브라우저에 노출해도 되는 공개 키만)
+app.get('/api/config', (req, res) => {
+    res.json({ tossClientKey: process.env.TOSS_CLIENT_KEY });
+});
+
 // 라우트
 app.use('/api', paymentRoutes);
 app.use('/api/users', userRoutes);

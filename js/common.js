@@ -1,3 +1,8 @@
+// 환경별 API URL (상용: /api, 로컬/개발서버: /prep/api)
+const API_BASE_URL = (window.location.hostname === 'prep.event-promotion.co.kr')
+    ? '/api'
+    : '/prep/api';
+
 /**
  * Form 데이터 serialize화
  */

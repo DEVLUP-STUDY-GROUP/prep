@@ -2,11 +2,12 @@
 (function() {
     'use strict';
 
-    // 설정
+    // 설정 (API_BASE_URL은 common.js에서 전역으로 정의)
     const CONFIG = {
-        API_BASE_URL: '/prep/api',
-        TOSS_CLIENT_KEY: 'test_ck_LlDJaYngrozLoW0KWKblVezGdRpX' // 테스트 키 (실제 운영시 변경 필요)
+        API_BASE_URL: API_BASE_URL
     };
+
+    let tossClientKey = null;
 
     // 상태 관리
     let selectedProduct = null;
@@ -63,9 +64,17 @@
         }
     }
 
+    // 서버에서 클라이언트 설정 로드
+    async function loadConfig() {
+        const res = await fetch(`${CONFIG.API_BASE_URL}/config`);
+        const data = await res.json();
+        tossClientKey = data.tossClientKey;
+    }
+
     // 초기화
     async function init() {
         updateNav();
+        await loadConfig();
         await loadProducts();
         setupEventListeners();
     }
@@ -191,7 +200,7 @@
 
     // 토스 페이먼츠 결제 요청
     async function requestTossPayment(orderData) {
-        const tossPayments = TossPayments(CONFIG.TOSS_CLIENT_KEY);
+        const tossPayments = TossPayments(tossClientKey);
 
         const payment = tossPayments.payment({ customerKey: orderData.orderId });
 
@@ -203,8 +212,8 @@
             },
             orderId: orderData.orderId,
             orderName: orderData.orderName,
-            successUrl: `${window.location.origin}/prep/payment-success.html`,
-            failUrl: `${window.location.origin}/prep/payment-fail.html`,
+            successUrl: `${window.location.origin}${window.location.hostname === 'prep.event-promotion.co.kr' ? '' : '/prep'}/payment-success.html`,
+            failUrl: `${window.location.origin}${window.location.hostname === 'prep.event-promotion.co.kr' ? '' : '/prep'}/payment-fail.html`,
             card: {
                 useEscrow: false,
                 flowMode: 'DEFAULT',
