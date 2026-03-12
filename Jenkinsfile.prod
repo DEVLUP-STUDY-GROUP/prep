@@ -17,7 +17,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 withCredentials([file(credentialsId: 'prep-env-prod', variable: 'ENV_FILE')]) {
-                    sshagent(['prep-prod-deploy-ssh-key']) {
+                    sshagent(['riseone-ssh-key']) {
                         sh '''
                             # 기존 .env 파일 제거 후 전송
                             ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} "rm -f /tmp/prep.env"
