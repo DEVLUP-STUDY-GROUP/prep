@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DEPLOY_PATH = '/app/service/prep'
-        SSH_HOST = ''   // 상용 서버 IP 입력
+        SSH_HOST = '52.79.118.61'   // 상용 서버 IP 입력
         SSH_USER = 'ec2-user'
     }
 
